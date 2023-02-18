@@ -25,7 +25,6 @@ def _get_reviews(product: int, amount: int):
     base = 'https://www.pricerunner.com/public/social/content/review/productversions/merged/'
     data = '/uk?offset=0&limit=' + str(amount) + '&testFreak=true&section=prio'
     url = base + str(product) + data
-    print(url)
     response = requests.get(url)
 
     parsed = json.loads(response.text)
@@ -49,4 +48,16 @@ def get_list(model: str, amount: int):
     @return: A list of reviews.
     """
     return _get_reviews(_get_product(model), amount)
+
+
+def get_score(model: str):
+    """
+    Get the already averaged score on a scale of 1-5, as a float.
+    @param model: The model to get the score for.
+    """
+    url = "https://www.pricerunner.com/results?q=" + model
+    response = requests.get(url)
+    score = re.findall(r'>(\d\.\d)<', response.text).pop(0)
+    return float(score)
+
 
