@@ -97,10 +97,34 @@ def get_list(model: str, amount: int):
 def get_score(review_link: str):
     """
     Returns an already averaged score of the product model,
-    on a scale of 1 - 5.
+    on a scale of 1 - 10.
     :param review_link: Review page of the product model.
     :return: score as a float.
     """
     response = requests.get(review_link)
     score = re.findall(r'[^rank ]>(\d.\d)<', response.text)[0]
-    return float(score)
+    return float(score) * 2
+
+
+def get_search(model: str):
+    """
+    Returns the top 5 search results based on the model name.
+    :param model: The product model to search for.
+    :return: A list of dictionaries containing the name and URL of the products.
+    """
+    search_url = "https://pricespy.co.uk/search?search=" + model
+    response = requests.get(search_url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    product_names = soup.find_all("span", {"data-test": "ProductName"})[:5]
+    urls = [tag.get("href") for tag in soup.find_all("a") if "--p" in tag.get("href")][:5]
+    products = list()
+
+    for i in range(len(urls)):
+        product = {
+            "url": get_review_link(urls[i]),
+            "name": product_names[i].text
+        }
+        products.append(product)
+    return products
+
