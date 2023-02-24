@@ -30,7 +30,8 @@ def _get_reviews(product_page: str, amount: int):
     :param amount: The amount of reviews to get.
     :return: A list of reviews.
     """
-    url = get_review_link(product_page)
+    # url = get_review_link(product_page)
+    url = product_page
     options = webdriver.ChromeOptions()
 
     # Creates a headless Chrome instance, runs in the background without displaying a visible window
@@ -91,7 +92,7 @@ def get_list(model: str, amount: int):
     :param amount: The amount of reviews to gather.
     :return: A list of reviews.
     """
-    return _get_reviews(_get_product_page(model), amount)
+    return _get_reviews(model, amount)
 
 
 def get_score(review_link: str):

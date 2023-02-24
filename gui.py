@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import messagebox
 import pricespy
 
 
@@ -17,6 +18,8 @@ def init():
     entry.config(font=("arial", 12))
     canvas.create_window(400, 300, window=entry, width=200, height=30)
 
+    urls = []
+
     listbox = tk.Listbox(root)
     canvas.create_window(400, 400, window=listbox, width=250, height=150)
 
@@ -29,25 +32,43 @@ def init():
         value = entry.get()
         search_hits = pricespy.get_search(value)  # List of dictionaries containing url and model name.
 
-        # Clear the Listbox
+        # Clear the Listbox and url list
         listbox.delete(0, tk.END)
+        urls.clear()
 
         # Add the five closest related hits to the Listbox
         for hit in search_hits:
+            urls.append(hit["url"])
             listbox.insert(tk.END, hit["name"])
 
     entry.bind("<Return>", lambda event: root.after(0, update_results()))
 
     def handle_click(event):
         """
-
+        Gets clicked product model from `listbox`,
+        calls `confirm_search` to confirm that the user
+        want to search for the selected product model.
         :param event:
         :return:
         """
-        # Get the selected item
         index = listbox.curselection()[0]
         product = listbox.get(index)
-        print(f"Clicked product: {product}")
+        url = urls[index]
+
+        # Ask if the user wants to search for the selected product model
+        confirm_search(product, url)
+
+    def confirm_search(product: str, url: str):
+        """
+        Confirmation box..
+        Search for product if...
+        """
+        confirmed = messagebox.askyesno("Confirmation", "Do you want to search for: " + product)
+        if confirmed:
+            reviews = pricespy.get_list(url, 10)
+            print(reviews)
+        else:
+            print("Cancelled")
 
     listbox.bind("<ButtonRelease-1>", handle_click)
     root.mainloop()
