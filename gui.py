@@ -4,6 +4,9 @@ import pricespy
 
 
 def init():
+    """
+    Initializes the GUI for the application.
+    """
     root = tk.Tk()
     root.title("Review Scrapper")
 
@@ -60,8 +63,9 @@ def init():
 
     def confirm_search(product: str, url: str):
         """
-        Confirmation box..
-        Search for product if...
+        Asks the user if they want to proceed to search for selected product model.
+        Retrieves a list of reviews from of the product model by passing url and
+        the amount of reviews to retrieve.
         """
         confirmed = messagebox.askyesno("Confirmation", "Do you want to search for: " + product)
         if confirmed:
