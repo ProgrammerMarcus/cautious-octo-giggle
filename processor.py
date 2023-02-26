@@ -1,7 +1,26 @@
+from itertools import chain
+import os
+from operator import itemgetter
+from functools import reduce
 import nltk
-import re
 
-import pricerunner
+
+def s_counter(words: list):
+    """
+    Takes a list of words and returns a sorted list containing both the count of each word after applying stemming
+    and the original word.
+    @param words: The list of words to count.
+    @return: A sorted list containing the count and original word.
+    """
+    stemmer = nltk.stem.SnowballStemmer("english")
+    counted = dict()
+    for word in words:
+        stemmed = stemmer.stem(word)
+        if stemmed in counted.keys():
+            counted.update({stemmed: [word, counted.get(stemmed)[1] + 1]})
+        else:
+            counted.update({stemmed: [word, 1]})
+    return sorted(counted.values(), key=itemgetter(1), reverse=True)
 
 
 def process(*args: list):
@@ -12,27 +31,17 @@ def process(*args: list):
     @param args: Any number of lists of reviews.
     @return: A dictionary containing review statistics.
     """
+
+    nltk.data.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "nltk_data"))
     stemmer = nltk.stem.SnowballStemmer("english")
-    dictionary = dict()
-    for reviews in args:
-        for review in reviews:
-            words = re.sub(r"([,.;()]|\\n)", " ", review).split()
-            for word in words:
-                stem = stemmer.stem(word)
-                if dictionary.get(stem):
-                    previous = dictionary.get(stem)
-                    previous["count"] += 1
-                    dictionary.update(previous)
-                    print(dictionary.get(stem))
-                else:
-                    dictionary.update({
-                        stem: {
-                            "count": 1,
-                            "stemmed": stem,
-                            "original": word,
-                        },
-                    })
-        return dictionary
+
+    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "whitelist.txt")) as file:
+        whitelist = [stemmer.stem(line.strip()) for line in file]
+        filtered = s_counter(list(filter(lambda w: stemmer.stem(w) in whitelist,
+                                         reduce(lambda a, t: a + t, map(lambda i: nltk.word_tokenize(i, "english"),
+                                                                        chain(chain(*args)))))))
+
+    return filtered
 
 
 def score(*args: float):
@@ -47,6 +56,3 @@ def score(*args: float):
     if len(args) < 1:
         return -1
     return total / len(args)
-
-
-process(pricerunner.get_reviews(pricerunner.get_search("airpods").pop()["url"]))
