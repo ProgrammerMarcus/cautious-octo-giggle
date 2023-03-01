@@ -1,6 +1,10 @@
 import tkinter as tk
+from tkinter import *
 from tkinter import messagebox
+
 import pricespy
+import processor
+import summary
 
 
 def init():
@@ -8,23 +12,32 @@ def init():
     Initializes the GUI for the application.
     """
     root = tk.Tk()
-    root.title("Review Scrapper")
+    root.title("Review Scraper")
+    root.geometry("720x480")
 
-    canvas = tk.Canvas(root, width=800, height=600)
-    canvas.pack()
+    header_summary = tk.Label(root, text="Summary")
+    header_summary.config(font=("helvetica", 16, "bold"))
+    header_summary.place(x=5, y=5)
+
+    text_summary = tk.Text(root, height=25, width=30)
+    text_summary.config(state=DISABLED)
+    text_summary.place(x=5, y=35)
 
     label_input = tk.Label(root, text="Enter product model:")
-    label_input.config(font=("helvetica", 12))
-    canvas.create_window(400, 270, window=label_input)
+    label_input.config(font=("helvetica", 16, "bold"))
+    label_input.place(x=300, y=65)
 
-    entry = tk.Entry(root)
+    label_list = tk.Label(root, text="Search results:")
+    label_list.config(font=("helvetica", 16, "bold"))
+    label_list.place(x=300, y=140)
+
+    entry = tk.Entry(root, width=30)
     entry.config(font=("arial", 12))
-    canvas.create_window(400, 300, window=entry, width=200, height=30)
+    entry.place(x=300, y=95)
 
     urls = []
-
-    listbox = tk.Listbox(root)
-    canvas.create_window(400, 400, window=listbox, width=250, height=150)
+    listbox = tk.Listbox(root, height=15, width=60)
+    listbox.place(x=300, y=170)
 
     def update_results():
         """
@@ -69,10 +82,18 @@ def init():
         """
         confirmed = messagebox.askyesno("Confirmation", "Do you want to search for: " + product)
         if confirmed:
-            reviews = pricespy.get_list(url, 10)
-            print(reviews)
+            reviews = summary.summary(processor.process(pricespy.get_list(url, 10)))
+            score = processor.score(pricespy.get_score(url))
+            text_summary.config(state=tk.NORMAL)  # disabled state prevents updates
+            text_summary.delete("1.0", END)
+            text_summary.insert(END, "SCORE: " + str(round(score, 1)) + "\n\n")
+            text_summary.insert(END, "MOST USED DESCRIPTORS:\n" + reviews)
+            root.update()
+            text_summary.config(state=tk.DISABLED)
         else:
-            print("Cancelled")
+            text_summary.delete("1.0", END)
+            text_summary.insert(END, "SEARCH CANCELED")
+            text_summary.update()
 
     listbox.bind("<ButtonRelease-1>", handle_click)
     root.mainloop()
