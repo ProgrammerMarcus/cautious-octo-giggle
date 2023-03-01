@@ -4,6 +4,8 @@ from operator import itemgetter
 from functools import reduce
 import nltk
 
+nltk.download("punkt")
+
 
 def s_counter(words: list):
     """
