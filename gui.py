@@ -89,10 +89,13 @@ def init():
         if confirmed:
             # TEMPORARILY SOLUTION
             runner_hits = pricerunner.get_search(product)
-            # print(runner_hits)
+            rtings_hits = rtings.get_search(product)
+            # print(rtings_hits)
+
             runner_url = runner_hits[0]["url"]
-            reviews = summary.summary(processor.process(pricespy.get_list(url, 30), pricerunner.get_reviews(runner_url)))
-            score = processor.score(pricespy.get_score(url))
+            reviews = summary.summary(processor.process(pricespy.get_list(url, 30),
+                                                        pricerunner.get_reviews(runner_url)))
+            score = processor.score(pricespy.get_score(url), pricerunner.get_score(runner_url))
             text_summary.config(state=tk.NORMAL)  # disabled state prevents updates
             text_summary.delete("1.0", END)
             text_summary.insert(END, "SCORE: " + str(round(score, 1)) + "\n\n")
