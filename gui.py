@@ -87,15 +87,22 @@ def init():
         """
         confirmed = messagebox.askyesno("Confirmation", "Do you want to search for: " + product)
         if confirmed:
-            # TEMPORARILY SOLUTION
             runner_hits = pricerunner.get_search(product)
-            rtings_hits = rtings.get_search(product)
-            # print(rtings_hits)
+            runner_url = runner_hits[0].get("url")
+            rting_result = next((s for s in rtings.get_search(product) if s.get("name") in product), None)
 
-            runner_url = runner_hits[0]["url"]
-            reviews = summary.summary(processor.process(pricespy.get_list(url, 30),
+            if rting_result is not None:
+                print(rting_result)
+                reviews = summary.summary(processor.process(pricespy.get_list(url, 30),
+                                                            pricerunner.get_reviews(runner_url),
+                                                            rtings.get_reviews(rting_result.get("url"))))
+                score = processor.score(pricespy.get_score(url), pricerunner.get_score(runner_url),
+                                        rtings.get_score(rting_result.get("url")))
+            else:
+                reviews = summary.summary(processor.process(pricespy.get_list(url, 30),
                                                         pricerunner.get_reviews(runner_url)))
-            score = processor.score(pricespy.get_score(url), pricerunner.get_score(runner_url))
+                score = processor.score(pricespy.get_score(url), pricerunner.get_score(runner_url))
+
             text_summary.config(state=tk.NORMAL)  # disabled state prevents updates
             text_summary.delete("1.0", END)
             text_summary.insert(END, "SCORE: " + str(round(score, 1)) + "\n\n")
