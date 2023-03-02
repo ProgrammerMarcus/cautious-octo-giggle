@@ -3,6 +3,8 @@ from tkinter import *
 from tkinter import messagebox
 
 import pricespy
+import pricerunner
+import rtings
 import processor
 import summary
 
@@ -46,6 +48,8 @@ def init():
         :param event: <Return> key pressed.
         """
         value = entry.get()
+        # rtings_hits = rtings.get_search(value)
+
         search_hits = pricespy.get_search(value)  # List of dictionaries containing url and model name.
 
         # Clear the Listbox and url list
@@ -74,6 +78,7 @@ def init():
         # Ask if the user wants to search for the selected product model
         confirm_search(product, url)
 
+    # TODO: Take arguments as list?
     def confirm_search(product: str, url: str):
         """
         Asks the user if they want to proceed to search for selected product model.
@@ -82,7 +87,11 @@ def init():
         """
         confirmed = messagebox.askyesno("Confirmation", "Do you want to search for: " + product)
         if confirmed:
-            reviews = summary.summary(processor.process(pricespy.get_list(url, 10)))
+            # TEMPORARILY SOLUTION
+            runner_hits = pricerunner.get_search(product)
+            # print(runner_hits)
+            runner_url = runner_hits[0]["url"]
+            reviews = summary.summary(processor.process(pricespy.get_list(url, 30), pricerunner.get_reviews(runner_url)))
             score = processor.score(pricespy.get_score(url))
             text_summary.config(state=tk.NORMAL)  # disabled state prevents updates
             text_summary.delete("1.0", END)
