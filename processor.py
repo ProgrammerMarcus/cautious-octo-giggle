@@ -44,15 +44,15 @@ def process(*args: list):
     return filtered
 
 
-def score(*args: float):
+def score(scores: list):
     """
     Calculates the average of the arguments.
-    @param args: Any number of floating point arguments.
+    @param scores: Any number of floating point arguments.
     @return: The average of the arguments.
     """
     total = 0.0
-    for num in args:
+    for num in scores:
         total += num
-    if len(args) < 1:
+    if len(scores) < 1:
         return -1
-    return total / len(args)
+    return total / len(scores)

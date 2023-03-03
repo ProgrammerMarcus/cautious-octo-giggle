@@ -2,9 +2,7 @@ import tkinter as tk
 from tkinter import *
 from tkinter import messagebox
 
-import pricespy
-import pricerunner
-import rtings
+import combiner
 import processor
 import summary
 
@@ -37,6 +35,10 @@ def init():
     entry.config(font=("arial", 12))
     entry.place(x=300, y=95)
 
+    button_submit = tk.Button(root, text="Search")
+    button_submit.config(relief=RAISED, bg="lightblue", )
+    button_submit.place(x=580, y=93)
+
     urls = []
     listbox = tk.Listbox(root, height=15, width=60)
     listbox.place(x=300, y=170)
@@ -45,12 +47,9 @@ def init():
         """
         Gets the product in the input field and sends it
         to the scrappers to get a list of the top 5 resulting search hits.
-        :param event: <Return> key pressed.
         """
         value = entry.get()
-        # rtings_hits = rtings.get_search(value)
-
-        search_hits = pricespy.get_search(value)  # List of dictionaries containing url and model name.
+        search_hits = combiner.search(value)  # List of dictionaries containing url and model name.
 
         # Clear the Listbox and url list
         listbox.delete(0, tk.END)
@@ -58,18 +57,15 @@ def init():
 
         # Add the five closest related hits to the Listbox
         for hit in search_hits:
-            urls.append(hit["url"])
-            listbox.insert(tk.END, hit["name"])
-
-    entry.bind("<Return>", lambda event: root.after(0, update_results()))
+            urls.append(search_hits[hit])
+            listbox.insert(tk.END, hit)
 
     def handle_click(event):
         """
         Gets clicked product model from `listbox`,
         calls `confirm_search` to confirm that the user
         want to search for the selected product model.
-        :param event:
-        :return:
+        :param event: Unused.
         """
         index = listbox.curselection()[0]
         product = listbox.get(index)
@@ -78,8 +74,7 @@ def init():
         # Ask if the user wants to search for the selected product model
         confirm_search(product, url)
 
-    # TODO: Take arguments as list?
-    def confirm_search(product: str, url: str):
+    def confirm_search(product: str, url: dict):
         """
         Asks the user if they want to proceed to search for selected product model.
         Retrieves a list of reviews from of the product model by passing url and
@@ -87,26 +82,22 @@ def init():
         """
         confirmed = messagebox.askyesno("Confirmation", "Do you want to search for: " + product)
         if confirmed:
-            runner_hits = pricerunner.get_search(product)
-            runner_url = runner_hits[0].get("url")
-            rting_result = next((s for s in rtings.get_search(product) if s.get("name") in product), None)
 
-            if rting_result is not None:
-                print(rting_result)
-                reviews = summary.summary(processor.process(pricespy.get_list(url, 30),
-                                                            pricerunner.get_reviews(runner_url),
-                                                            rtings.get_reviews(rting_result.get("url"))))
-                score = processor.score(pricespy.get_score(url), pricerunner.get_score(runner_url),
-                                        rtings.get_score(rting_result.get("url")))
-            else:
-                reviews = summary.summary(processor.process(pricespy.get_list(url, 30),
-                                                        pricerunner.get_reviews(runner_url)))
-                score = processor.score(pricespy.get_score(url), pricerunner.get_score(runner_url))
+            gathered = combiner.gather(url)
+
+            score = processor.score(gathered["score"])
+
+            sources = gathered["sources"]
+
+            reviews = summary.summary(processor.process(gathered["ratings"]))
 
             text_summary.config(state=tk.NORMAL)  # disabled state prevents updates
             text_summary.delete("1.0", END)
             text_summary.insert(END, "SCORE: " + str(round(score, 1)) + "\n\n")
             text_summary.insert(END, "MOST USED DESCRIPTORS:\n" + reviews)
+            text_summary.insert(END, "\nSOURCES:\n")
+            for s in sources:
+                text_summary.insert(END, s + "\n")
             root.update()
             text_summary.config(state=tk.DISABLED)
         else:
@@ -114,6 +105,8 @@ def init():
             text_summary.insert(END, "SEARCH CANCELED")
             text_summary.update()
 
+    entry.bind("<Return>", lambda event: root.after(0, update_results()))
+    button_submit.bind("<ButtonRelease-1>", lambda event: root.after(0, update_results()))
     listbox.bind("<ButtonRelease-1>", handle_click)
     root.mainloop()
 
