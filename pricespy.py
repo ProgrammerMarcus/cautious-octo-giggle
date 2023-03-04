@@ -1,4 +1,6 @@
 import re
+import time
+
 from bs4 import BeautifulSoup
 import requests
 from selenium import webdriver
@@ -38,40 +40,39 @@ def _get_reviews(product_page: str, amount: int):
     options.add_argument('--headless')
     driver = webdriver.Chrome(options=options)
     driver.get(url)
+    div_reviews = []
+    reviews = []
+    counter = 0
+    while True:
+        try:
+            # Find the 'Show more' button
+            button = WebDriverWait(driver, 10) \
+                .until(ec.element_to_be_clickable((By.XPATH,
+                                                   '//button[contains(@class, "BaseButton--") and span[contains(text(), '
+                                                   '"Show more")]]')))
 
-    # Locating the button with "Show more" as text
-    button = WebDriverWait(driver, 10) \
-        .until(ec.element_to_be_clickable((By.XPATH,
-                                           '//button[contains(@class, "BaseButton--") and span[contains(text(), '
-                                           '"Show more")]]')))
+            # Scroll to the button element to bring it into view
+            actions = ActionChains(driver)
+            actions.move_to_element(button).perform()
+            # Click the button to load more elements
+            driver.execute_script("arguments[0].click();", button)
+            # Wait for the new elements to load
+            time.sleep(2)
+            new_reviews = list(driver.find_elements(By.CSS_SELECTOR, 'div[id^="review-text-"]'))
+            if new_reviews:
+                div_reviews.extend(new_reviews)
+                counter += len(new_reviews)
+            if counter >= amount:
+                break
+        except Exception as e:
+            print(f"Exception in pricespy occurred: {str(e)}")
+            continue
 
-    # Scroll to the button element to bring it into view
-    actions = ActionChains(driver)
-    actions.move_to_element(button).perform()
-
-    # Script that clicks the "Show More" button, which loads more user reviews
-    driver.execute_script("arguments[0].click();", button)
-
-    # Wait for the page to load the additional reviews
-    user_review_div = WebDriverWait(driver, 10).until(
-        ec.presence_of_all_elements_located((By.CSS_SELECTOR, 'div[id^="review-text-"]')))
-
-    reviews = set()
-    while len(reviews) < amount:
-        for review_div in user_review_div:
-            review = review_div.text
-            if review not in reviews:
-                reviews.add(review)
-                if len(reviews) >= amount:
-                    break
-
-        driver.execute_script("arguments[0].click();", button)
-
-        user_review_div = WebDriverWait(driver, 10).until(
-            ec.presence_of_all_elements_located((By.CSS_SELECTOR, 'div[id^="review-text-"]')))
+    for review in div_reviews:
+        reviews.append(review.text)
 
     driver.quit()
-    return list(reviews)[:amount]
+    return reviews
 
 
 def get_review_link(product_page: str):
