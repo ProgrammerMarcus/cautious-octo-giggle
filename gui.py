@@ -39,6 +39,9 @@ def init():
     button_submit.config(relief=RAISED, bg="lightblue", )
     button_submit.place(x=580, y=93)
 
+    status = tk.Label(root, text="Waiting...")
+    status.place(x=5, y=450)
+
     urls = []
     listbox = tk.Listbox(root, height=15, width=60)
     listbox.place(x=300, y=170)
@@ -49,8 +52,11 @@ def init():
         to the scrappers to get a list of the top 5 resulting search hits.
         """
         value = entry.get()
+        status.config(text="Searching...")
+        status.update()
         search_hits = combiner.search(value)  # List of dictionaries containing url and model name.
-
+        status.config(text="Waiting...")
+        status.update()
         # Clear the Listbox and url list
         listbox.delete(0, tk.END)
         urls.clear()
@@ -82,13 +88,15 @@ def init():
         """
         confirmed = messagebox.askyesno("Confirmation", "Do you want to search for: " + product)
         if confirmed:
-
+            status.config(text="Gathering reviews (this can take a while)...")
+            status.update()
             gathered = combiner.gather(url)
 
             score = processor.score(gathered["score"])
 
             sources = gathered["sources"]
 
+            status.config(text="Processing...")
             reviews = summary.summary(processor.process(gathered["ratings"]))
 
             text_summary.config(state=tk.NORMAL)  # disabled state prevents updates
@@ -98,12 +106,15 @@ def init():
             text_summary.insert(END, "\nSOURCES:\n")
             for s in sources:
                 text_summary.insert(END, s + "\n")
+            status.config(text="Complete.")
             root.update()
             text_summary.config(state=tk.DISABLED)
         else:
             text_summary.delete("1.0", END)
             text_summary.insert(END, "SEARCH CANCELED")
             text_summary.update()
+            status.config(text="Canceled.")
+            status.update()
 
     entry.bind("<Return>", lambda event: root.after(0, update_results()))
     button_submit.bind("<ButtonRelease-1>", lambda event: root.after(0, update_results()))

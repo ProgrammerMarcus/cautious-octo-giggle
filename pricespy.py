@@ -4,6 +4,9 @@ import time
 from bs4 import BeautifulSoup
 import requests
 from selenium import webdriver
+
+from selenium.webdriver.edge.service import Service
+from subprocess import CREATE_NO_WINDOW
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
@@ -34,11 +37,17 @@ def _get_reviews(product_page: str, amount: int):
     """
     # url = get_review_link(product_page)
     url = product_page
-    options = webdriver.ChromeOptions()
 
-    # Creates a headless Chrome instance, runs in the background without displaying a visible window
+    options = webdriver.EdgeOptions()
+
+    # Creates a headless Edge instance, runs in the background without displaying a visible window
     options.add_argument('--headless')
-    driver = webdriver.Chrome(options=options)
+
+    # intended to hide console pop-ups when console is hidden, but does not seem to work
+    edge_service = Service(webdriver.edge.service.DEFAULT_EXECUTABLE_PATH)
+    edge_service.creationflags = CREATE_NO_WINDOW
+    driver = webdriver.Edge(options=options, service=edge_service)
+
     driver.get(url)
     div_reviews = []
     reviews = []
@@ -48,7 +57,7 @@ def _get_reviews(product_page: str, amount: int):
             # Find the 'Show more' button
             button = WebDriverWait(driver, 10) \
                 .until(ec.element_to_be_clickable((By.XPATH,
-                                                   '//button[contains(@class, "BaseButton--") and span[contains(text(), '
+                                                   '//button[contains(@class, "BaseButton--") and span[contains(text(),'
                                                    '"Show more")]]')))
 
             # Scroll to the button element to bring it into view
@@ -129,4 +138,3 @@ def get_search(model: str):
         }
         products.append(product)
     return products
-

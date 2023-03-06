@@ -65,4 +65,6 @@ def gather(limited: dict):
                 final.update({"ratings": final["ratings"] + ratings})
                 final.update({"score": final["score"] + list({score})})
                 final.update({"sources": final["sources"] + list({"Rtings.com"})})
+
+    final["sources"] = list(set(final["sources"]))  # removes duplicate websites
     return final
