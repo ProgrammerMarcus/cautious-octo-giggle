@@ -2,6 +2,15 @@
 
 This is an application for scraping reviews using Python.
 
+# Usage
+
+1. Start the application by running "Review Scraper.exe".
+2. Enter a product model under "Enter product model:".
+3. Click on "Search" or hit enter.
+4. Select a product model under "Search results:".
+5. The summarization results are displayed under "Summary:".
+6. Start from step 2 to search again or exit the application by pressing the "X" on the top right of the window.
+
 ## Distribution
 
 Executable files are generated using PyInstaller. To generate an executable (exe) perform the following steps:
