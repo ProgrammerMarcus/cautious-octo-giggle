@@ -11,6 +11,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver import DesiredCapabilities
 
 
 def _get_product_page(model: str):
@@ -35,18 +36,38 @@ def _get_reviews(product_page: str, amount: int):
     :param amount: The amount of reviews to get.
     :return: A list of reviews.
     """
-    # url = get_review_link(product_page)
-    url = product_page
 
+    url = product_page
     options = webdriver.EdgeOptions()
 
-    # Creates a headless Edge instance, runs in the background without displaying a visible window
     options.add_argument('--headless')
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-dev-tools")
+    options.add_experimental_option('excludeSwitches', ['enable-logging'])
+
+    # capabilities, intended to try and hide the console window  pop-up
+    capabilities = DesiredCapabilities.EDGE
+    capabilities["ms:inPrivate"] = True  # Add the inPrivate option to disable the DevTools console popup
+    capabilities["ms:edgeOptions"] = {
+        "extensions": [],
+        "args": ["--disable-extensions", "--headless", "--disable-gpu", "--disable-dev-tools"],
+        "perfLoggingPrefs": {
+            "enableNetwork": False,
+            "enablePage": False,
+            "enableTimeline": False,
+            "traceCategories": "browser,devtools.timeline,devtools"
+        }
+    }
+    capabilities["ms:HideCommandPromptWindow"] = True
 
     # intended to hide console pop-ups when console is hidden, but does not seem to work
     edge_service = Service(webdriver.edge.service.DEFAULT_EXECUTABLE_PATH)
+    edge_service.command_line_args().append("--silent")
     edge_service.creationflags = CREATE_NO_WINDOW
-    driver = webdriver.Edge(options=options, service=edge_service)
+
+    driver = webdriver.Edge(options=options,
+                            capabilities=capabilities,
+                            service=edge_service)
 
     driver.get(url)
     div_reviews = []
@@ -74,7 +95,7 @@ def _get_reviews(product_page: str, amount: int):
             if counter >= amount:
                 break
         except Exception as e:
-            print(f"Exception in pricespy occurred: {str(e)}")
+            # print(f"Exception in pricespy occurred: {str(e)}")
             continue
 
     for review in div_reviews:
