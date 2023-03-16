@@ -19,6 +19,7 @@ def init():
     header_summary.config(font=("helvetica", 16, "bold"))
     header_summary.place(x=5, y=5)
 
+    # Text box to display summary
     text_summary = tk.Text(root, height=25, width=30)
     text_summary.config(state=DISABLED)
     text_summary.place(x=5, y=35)
@@ -52,6 +53,10 @@ def init():
         to the scrappers to get a list of the top 5 resulting search hits.
         """
         value = entry.get()
+        if len(value) == 0:
+            status.config(text="Please enter a product model")
+            return
+
         status.config(text="Searching...")
         status.update()
         search_hits = combiner.search(value)  # List of dictionaries containing url and model name.
